@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vendas Porsche | Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f3f2ef; --surface:#fcfcfb; --surface-2:#eceae5; --border:#dcd9d2;
+  --ink:#141414; --ink-2:#52514e; --ink-3:#7c7a74;
+  --accent:#2a78d6; --accent-soft:#cde2fb; --accent-ink:#1c5cab;
+  --grid:#e6e4de;
+  --ok:#1f8a4c; --warn:#b37400; --muted:#9a978f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#242422; --border:#33322f;
+    --ink:#f0efec; --ink-2:#c3c2b7; --ink-3:#8f8d86;
+    --accent:#3987e5; --accent-soft:#184f95; --accent-ink:#86b6ef;
+    --grid:#2a2a28;
+    --ok:#3fb06d; --warn:#d99a1e; --muted:#77756f;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#242422; --border:#33322f;
+  --ink:#f0efec; --ink-2:#c3c2b7; --ink-3:#8f8d86;
+  --accent:#3987e5; --accent-soft:#184f95; --accent-ink:#86b6ef;
+  --grid:#2a2a28;
+  --ok:#3fb06d; --warn:#d99a1e; --muted:#77756f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+h1{margin:4px 0 2px;font-size:30px;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--ink-2);margin:0;max-width:640px}
+.theme-btn{background:var(--surface);border:1px solid var(--border);color:var(--ink-2);border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;cursor:pointer}
+
+/* filtros */
+.filters{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 12px;margin-bottom:8px;border-bottom:1px solid var(--border)}
+.frow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr)) auto;gap:10px;align-items:end}
+.frow label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--ink-2)}
+select{appearance:none;width:100%;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237c7a74'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid var(--border);border-radius:8px;padding:8px 26px 8px 10px;font:inherit;font-size:14px;color:var(--ink)}
+select.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.reset{background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font:inherit;font-size:13px;color:var(--ink-2);cursor:pointer;height:38px}
+.reset:hover{border-color:var(--ink-3)}
+.status-line{font-size:13px;color:var(--ink-3);margin-top:8px}
+.status-line b{color:var(--ink)}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:18px 0}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.kpi .lab{font-size:12px;font-weight:600;color:var(--ink-2)}
+.kpi .val{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .note{font-size:12px;color:var(--ink-3);margin-top:2px}
+
+/* cards de pergunta */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 18px 14px;min-width:0}
+.card.wide{grid-column:1 / -1}
+.qn{font-size:12px;font-weight:700;color:var(--accent-ink);letter-spacing:.06em;text-transform:uppercase}
+.card h2{font-size:17px;margin:4px 0 2px;font-weight:700;letter-spacing:-.01em}
+.answer{font-size:13.5px;color:var(--ink-2);margin:0 0 10px;min-height:2.6em}
+.answer b{color:var(--ink)}
+.chart-box{position:relative;height:260px}
+.empty{display:none;position:absolute;inset:0;align-items:center;justify-content:center;color:var(--ink-3);font-size:14px}
+.pipe{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.pipe .st{border-radius:10px;padding:10px 12px;background:var(--surface-2)}
+.pipe .st .n{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.pipe .st .t{font-size:12px;font-weight:600;color:var(--ink-2);display:flex;gap:6px;align-items:center}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+/* tabela */
+details{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px}
+summary{cursor:pointer;font-weight:700;font-size:14px}
+.tbl-wrap{overflow-x:auto;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--grid);white-space:nowrap}
+th{color:var(--ink-2);font-weight:600;font-size:12px}
+td.num,th.num{text-align:right}
+footer{margin-top:22px;font-size:12px;color:var(--ink-3)}
+
+@media (max-width:900px){
+  .frow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .reset{grid-column:1 / -1}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid{grid-template-columns:1fr}
+  .pipe{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .filters{position:static}
+  h1{font-size:24px}
+  .kpi .val{font-size:21px}
+  .kpi:last-child{grid-column:1 / -1}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Desafio de projeto · Análise de vendas</div>
+      <h1>Vendas Porsche</h1>
+      <p class="sub">100 vendas de concessionárias nos EUA. Três perguntas de negócio, respondidas com a base sanitizada. Use os filtros para recortar.</p>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button">Alternar tema</button>
+  </header>
+
+  <section class="filters" aria-label="Filtros">
+    <div class="frow">
+      <label>Família<select id="f-familia"></select></label>
+      <label>Modelo<select id="f-modelo"></select></label>
+      <label>Ano-modelo<select id="f-ano_modelo"></select></label>
+      <label>Estado<select id="f-estado"></select></label>
+      <label>Pagamento<select id="f-forma_pagamento"></select></label>
+      <label>Etapa da entrega<select id="f-etapa_entrega"></select></label>
+      <button class="reset" id="reset" type="button">Limpar filtros</button>
+    </div>
+    <div class="status-line" id="statusLine"></div>
+  </section>
+
+  <section class="kpis" aria-label="Indicadores">
+    <div class="kpi"><div class="lab">Vendas</div><div class="val" id="k-vendas">–</div><div class="note" id="k-vendas-n">&nbsp;</div></div>
+    <div class="kpi"><div class="lab">Receita total</div><div class="val" id="k-receita">–</div><div class="note">em dólares (USD)</div></div>
+    <div class="kpi"><div class="lab">Ticket médio</div><div class="val" id="k-ticket">–</div><div class="note" id="k-ticket-n">&nbsp;</div></div>
+    <div class="kpi"><div class="lab">Receita já entregue</div><div class="val" id="k-entregue">–</div><div class="note" id="k-entregue-n">&nbsp;</div></div>
+    <div class="kpi"><div class="lab">Receita a entregar</div><div class="val" id="k-aberto">–</div><div class="note" id="k-aberto-n">&nbsp;</div></div>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <div class="qn">Pergunta 1</div>
+      <h2>Qual família de modelos mais gera receita?</h2>
+      <p class="answer" id="a1"></p>
+      <div class="chart-box"><canvas id="c1" aria-label="Receita por família de modelo"></canvas><div class="empty">Nenhuma venda neste recorte</div></div>
+    </article>
+
+    <article class="card">
+      <div class="qn">Pergunta 2</div>
+      <h2>Qual forma de pagamento traz o maior ticket?</h2>
+      <p class="answer" id="a2"></p>
+      <div class="chart-box"><canvas id="c2" aria-label="Ticket médio por forma de pagamento"></canvas><div class="empty">Nenhuma venda neste recorte</div></div>
+    </article>
+
+    <article class="card wide">
+      <div class="qn">Pergunta 3</div>
+      <h2>Quanto da receita ainda não chegou ao cliente, e onde ela está parada?</h2>
+      <p class="answer" id="a3"></p>
+      <div class="pipe" id="pipe"></div>
+      <div class="chart-box" style="height:300px"><canvas id="c3" aria-label="Receita por estado e etapa da entrega"></canvas><div class="empty">Nenhuma venda neste recorte</div></div>
+    </article>
+  </section>
+
+  <details>
+    <summary>Ver as vendas do recorte (tabela)</summary>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>ID</th><th>Data</th><th>Modelo</th><th class="num">Ano</th><th class="num">Preço (USD)</th><th>Pagamento</th><th>Cidade</th><th>UF</th><th>Etapa</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table></div>
+  </details>
+
+  <footer>Fonte: planilha base Porsche (colunas sanitizadas). Valores em USD. 24 vendas têm data inválida na origem e por isso a data aparece como "sem data"; elas continuam somando nos indicadores.</footer>
+</div>
+
+<script>
+const DADOS = /*__DADOS__*/[];
+
+const FILTROS = ["familia","modelo","ano_modelo","estado","forma_pagamento","etapa_entrega"];
+const ETAPAS = ["Entregue","Em transporte","Pendente","Cancelada"];
+const usd0 = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"USD",maximumFractionDigits:0});
+const curto = v => v>=1e6 ? "US$ "+(v/1e6).toLocaleString("pt-BR",{maximumFractionDigits:2})+" mi"
+                : v>=1e3 ? "US$ "+(v/1e3).toLocaleString("pt-BR",{maximumFractionDigits:0})+" mil" : usd0.format(v);
+const pct = v => (v*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"%";
+const soma = arr => arr.reduce((s,d)=>s+d.preco_usd,0);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const corEtapa = () => ({"Entregue":css("--ok"),"Em transporte":css("--accent"),"Pendente":css("--warn"),"Cancelada":css("--muted")});
+
+const estado = Object.fromEntries(FILTROS.map(f=>[f,""]));
+
+function opcoes(campo, base){
+  const vals=[...new Set(base.map(d=>d[campo]))].filter(v=>v!==null&&v!=="");
+  return vals.sort((a,b)=> typeof a==="number" ? a-b : String(a).localeCompare(String(b),"pt-BR",{numeric:true}));
+}
+function filtrar(ignorar){
+  return DADOS.filter(d=>FILTROS.every(f=> f===ignorar || !estado[f] || String(d[f])===estado[f]));
+}
+function montarSelects(){
+  FILTROS.forEach(f=>{
+    const sel=document.getElementById("f-"+f);
+    const vals=opcoes(f, filtrar(f));        // opções em cascata
+    const atual=estado[f];
+    sel.innerHTML='<option value="">Todos</option>'+vals.map(v=>`<option value="${v}">${v}</option>`).join("");
+    if(atual && !vals.map(String).includes(atual)) estado[f]="";
+    sel.value=estado[f];
+    sel.classList.toggle("on",!!estado[f]);
+  });
+}
+
+Chart.defaults.font.family="Manrope, system-ui, sans-serif";
+Chart.defaults.font.size=12;
+const charts={};
+function barH(id, labels, valores, cores, tooltip, fmtEixo){
+  const el=document.getElementById(id);
+  el.parentElement.querySelector(".empty").style.display = labels.length? "none":"flex";
+  const cfg={
+    type:"bar",
+    data:{labels,datasets:[{data:valores,backgroundColor:cores,borderRadius:4,borderSkipped:"start",barPercentage:.72,categoryPercentage:.9,maxBarThickness:28}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,animation:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:tooltip},displayColors:false,padding:10}},
+      scales:{
+        x:{grid:{color:css("--grid")},border:{display:false},ticks:{color:css("--ink-3"),callback:fmtEixo,maxTicksLimit:5}},
+        y:{grid:{display:false},border:{display:false},ticks:{color:css("--ink-2"),font:{weight:600}}}
+      }}
+  };
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(el,cfg);
+}
+
+function agrupar(lista, campo){
+  const m=new Map();
+  lista.forEach(d=>{const k=d[campo]; const g=m.get(k)||{n:0,r:0}; g.n++; g.r+=d.preco_usd; m.set(k,g);});
+  return [...m.entries()].map(([k,g])=>({k,n:g.n,r:g.r,t:g.r/g.n}));
+}
+
+function render(){
+  montarSelects();
+  const d=filtrar();
+  const total=soma(DADOS), rec=soma(d);
+  const ent=soma(d.filter(x=>x.etapa_entrega==="Entregue"));
+  const aberto=soma(d.filter(x=>x.etapa_entrega==="Em transporte"||x.etapa_entrega==="Pendente"));
+  const ativos=FILTROS.filter(f=>estado[f]);
+
+  document.getElementById("statusLine").innerHTML = ativos.length
+    ? `Mostrando <b>${d.length}</b> de ${DADOS.length} vendas · filtros: `+ativos.map(f=>`<b>${estado[f]}</b>`).join(" + ")
+    : `Mostrando todas as <b>${DADOS.length}</b> vendas`;
+
+  document.getElementById("k-vendas").textContent=d.length;
+  document.getElementById("k-vendas-n").textContent=ativos.length? pct(d.length/DADOS.length)+" do total":"todas as vendas";
+  document.getElementById("k-receita").textContent=curto(rec);
+  document.getElementById("k-ticket").textContent=d.length? curto(rec/d.length):"–";
+  const tg=soma(DADOS)/DADOS.length;
+  document.getElementById("k-ticket-n").textContent=d.length&&ativos.length? ((rec/d.length)>=tg?"acima":"abaixo")+" da média geral ("+curto(tg)+")":"por venda";
+  document.getElementById("k-entregue").textContent=curto(ent);
+  document.getElementById("k-entregue-n").textContent=rec? pct(ent/rec)+" da receita do recorte":"";
+  document.getElementById("k-aberto").textContent=curto(aberto);
+  document.getElementById("k-aberto-n").textContent=rec? pct(aberto/rec)+" em transporte ou pendente":"";
+
+  const accent=css("--accent"), soft=css("--accent-soft");
+
+  // P1: receita por família
+  const fam=agrupar(d,"familia").sort((a,b)=>b.r-a.r);
+  barH("c1", fam.map(x=>x.k), fam.map(x=>x.r), fam.map((x,i)=>i===0?accent:soft),
+    c=>{const x=fam[c.dataIndex]; return [`Receita: ${usd0.format(x.r)}`,`Vendas: ${x.n}`,`Ticket médio: ${usd0.format(x.t)}`];}, curto);
+  document.getElementById("a1").innerHTML = fam.length
+    ? `<b>${fam[0].k}</b> lidera com ${curto(fam[0].r)} (${pct(fam[0].r/rec)} da receita), em ${fam[0].n} vendas com ticket de ${curto(fam[0].t)}.`
+      + (fam.length>1? ` A segunda é <b>${fam[1].k}</b>, com ${curto(fam[1].r)}.`:"")
+    : "Sem vendas no recorte.";
+
+  // P2: ticket médio por pagamento
+  const pag=agrupar(d,"forma_pagamento").sort((a,b)=>b.t-a.t);
+  const maisUsado=[...pag].sort((a,b)=>b.n-a.n)[0];
+  barH("c2", pag.map(x=>x.k), pag.map(x=>x.t), pag.map((x,i)=>i===0?accent:soft),
+    c=>{const x=pag[c.dataIndex]; return [`Ticket médio: ${usd0.format(x.t)}`,`Vendas: ${x.n}`,`Receita: ${usd0.format(x.r)}`];}, curto);
+  document.getElementById("a2").innerHTML = pag.length
+    ? `Maior ticket: <b>${pag[0].k}</b> (${curto(pag[0].t)}, ${pag[0].n} ${pag[0].n>1?"vendas":"venda"}). Forma mais usada: <b>${maisUsado.k}</b>, com ${maisUsado.n} ${maisUsado.n>1?"vendas":"venda"}.`
+    : "Sem vendas no recorte.";
+
+  // P3: etapas + estados com receita em aberto
+  const cores=corEtapa();
+  document.getElementById("pipe").innerHTML = ETAPAS.map(e=>{
+    const s=d.filter(x=>x.etapa_entrega===e);
+    return `<div class="st"><div class="t"><span class="dot" style="background:${cores[e]}"></span>${e}</div><div class="n">${curto(soma(s))}</div><div class="note" style="font-size:12px;color:var(--ink-3)">${s.length} ${s.length===1?"venda":"vendas"}</div></div>`;
+  }).join("");
+
+  const abertas=d.filter(x=>x.etapa_entrega==="Em transporte"||x.etapa_entrega==="Pendente");
+  const uf=agrupar(abertas,"estado").sort((a,b)=>b.r-a.r).slice(0,10);
+  const el3=document.getElementById("c3");
+  el3.parentElement.querySelector(".empty").style.display = uf.length? "none":"flex";
+  el3.parentElement.querySelector(".empty").textContent = d.length? "Nenhuma receita em aberto neste recorte":"Nenhuma venda neste recorte";
+  const serie = et => uf.map(u=>soma(abertas.filter(x=>x.estado===u.k && x.etapa_entrega===et)));
+  if(charts.c3) charts.c3.destroy();
+  charts.c3=new Chart(el3,{type:"bar",
+    data:{labels:uf.map(u=>u.k),datasets:["Em transporte","Pendente"].map(et=>({label:et,data:serie(et),backgroundColor:cores[et],borderRadius:4,borderSkipped:false,borderColor:css("--surface"),borderWidth:{right:2},barPercentage:.7,maxBarThickness:28}))},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,animation:false,
+      plugins:{legend:{position:"top",align:"start",labels:{color:css("--ink-2"),boxWidth:10,boxHeight:10,usePointStyle:true,pointStyle:"circle"}},
+        tooltip:{mode:"index",intersect:false,padding:10,callbacks:{title:c=>"Estado: "+c[0].label,label:c=>`${c.dataset.label}: ${usd0.format(c.raw)}`,
+          footer:c=>"Total em aberto: "+usd0.format(c.reduce((s,x)=>s+x.raw,0))}}},
+      scales:{x:{stacked:true,grid:{color:css("--grid")},border:{display:false},ticks:{color:css("--ink-3"),callback:curto,maxTicksLimit:5}},
+              y:{stacked:true,grid:{display:false},border:{display:false},ticks:{color:css("--ink-2"),font:{weight:600}}}}}});
+  document.getElementById("a3").innerHTML = rec
+    ? `<b>${curto(aberto)}</b> (${pct(aberto/rec)} da receita) ainda está em transporte ou pendente.` + (uf.length? ` O estado com mais valor parado é <b>${uf[0].k}</b> (${curto(uf[0].r)}). O gráfico mostra os 10 estados com mais receita em aberto.`:"")
+    : "Sem vendas no recorte.";
+
+  // tabela
+  document.getElementById("tbody").innerHTML = d.slice().sort((a,b)=>a.id_venda-b.id_venda).map(x=>
+    `<tr><td>${x.id_venda}</td><td>${x.data_venda?x.data_venda.split("-").reverse().join("/"):"sem data"}</td><td>${x.modelo}</td><td class="num">${x.ano_modelo}</td><td class="num">${usd0.format(x.preco_usd)}</td><td>${x.forma_pagamento}</td><td>${x.cidade}</td><td>${x.estado}</td><td>${x.etapa_entrega}</td></tr>`).join("");
+}
+
+FILTROS.forEach(f=>document.getElementById("f-"+f).addEventListener("change",e=>{estado[f]=e.target.value;render();}));
+document.getElementById("reset").addEventListener("click",()=>{FILTROS.forEach(f=>estado[f]="");render();});
+document.getElementById("themeBtn").addEventListener("click",()=>{
+  const r=document.documentElement;
+  const escuro = r.dataset.theme ? r.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = escuro? "light":"dark";
+  render();
+});
+render();
+</script>
+</body>
+</html>
